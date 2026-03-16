@@ -1,0 +1,53 @@
+modules = ["nodejs-24"]
+
+  [[artifacts]]
+  id = "artifacts/api-server"
+
+  [[artifacts]]
+  id = "artifacts/mockup-sandbox"
+
+  [deployment]
+  deploymentTarget = "static"
+  build = ["bash", "-c", "cd artifacts/point-buy-calculator && BASE_PATH=/ PORT=3000 pnpm run build"]
+  publicDir = "artifacts/point-buy-calculator/dist/public"
+
+  [deployment.postBuild]
+  args = ["pnpm", "store", "prune"]
+  env = { "CI" = "true" }
+
+  [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=24854 pnpm --filter @workspace/point-buy-calculator run dev"
+waitForPort = 24854
+
+  [agent]
+  stack = "PNPM_WORKSPACE"
+expertMode = true
+  integrations = ["github:1.0.0"]
+
+  [postMerge]
+  path = "scripts/post-merge.sh"
+  timeoutMs = 20000
+
+  [nix]
+  channel = "stable-25_05"
+  
